@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
+import { getSiteUrl } from "../lib/site-url";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://catalogo-zilis.vercel.app"),
+  metadataBase: getSiteUrl(),
   title: { default: "Productos Zilis | Catálogo informativo", template: "%s | Productos Zilis" },
   description: "Catálogo informativo independiente para conocer productos Zilis, sus ingredientes, usos y precauciones.",
   openGraph: { type: "website", locale: "es_CO", siteName: "Productos Zilis" },
