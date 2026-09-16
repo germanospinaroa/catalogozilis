@@ -1,0 +1,9 @@
+node_modules
+.next
+out
+.env*
+output
+.ref
+.cache
+*.log
+.DS_Store
