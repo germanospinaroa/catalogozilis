@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
+import { CatalogTracker } from "../components/CatalogTracker";
 import { getSiteUrl } from "../lib/site-url";
 
 const ogImageUrl = new URL("/catalogo-zilis-og-v2.jpg", getSiteUrl()).toString();
@@ -40,5 +41,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="es"><body><a className="skip-link" href="#contenido">Saltar al contenido</a><Header />{children}<Footer /></body></html>;
+  return <html lang="es"><body><CatalogTracker /><a className="skip-link" href="#contenido">Saltar al contenido</a><Header />{children}<Footer /></body></html>;
 }
