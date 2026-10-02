@@ -8,3 +8,5 @@ output
 *.log
 .DS_Store
 .vercel
+
+!.env.example

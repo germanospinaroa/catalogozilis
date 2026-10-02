@@ -1,14 +1,40 @@
+import type { CSSProperties } from "react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProduct, products } from "../../../data/products";
+import { ProductSections } from "../../../components/ProductSections";
+import { getProduct, products, type Product } from "../../../data/products";
 
-export function generateStaticParams() { return products.map(({ slug }) => ({ slug })); }
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> { const product = getProduct(params.slug); if (!product) return {}; return { title: `${product.name} | Información del producto`, description: product.shortDescription, alternates: { canonical: `/productos/${product.slug}` }, openGraph: { title: `${product.name} | Productos Zilis`, description: product.shortDescription, images: product.productImage ? [product.productImage] : [] }, twitter: { card: "summary_large_image", title: `${product.name} | Productos Zilis`, description: product.shortDescription, images: product.productImage ? [product.productImage] : [] } }; }
+const detailCopy: Record<string, { eyebrow: string; title: string; lead: string }> = {
+  ice: { eyebrow: "ICE · Bienestar diario", title: "Acompaña mejor el desgaste de todos los días.", lead: "Una fórmula de bienestar para personas que quieren apoyar recuperación y sentirse mejor dentro de una rutina constante." },
+  amalaki: { eyebrow: "AMALAKI · Fórmula herbal", title: "Tu cuerpo no está fallando. Solo necesita apoyo.", lead: "Una fórmula herbal basada en Amalaki y otros ingredientes botánicos para acompañar bienestar, digestión y equilibrio dentro de una rutina constante." },
+  "b-fit": { eyebrow: "B-FIT · Metabolismo", title: "Sentirte en control también empieza por lo que pasa dentro de tu cuerpo.", lead: "Una fórmula diaria en sobres que reúne fibras, compuestos botánicos y lípidos bioactivos seleccionados para acompañar metabolismo, saciedad, digestión y bienestar integral." },
+  edge: { eyebrow: "ULTRA EDGE · Energía y enfoque", title: "Enfoque y energía para cuando el día exige más.", lead: "Diseñado para acompañar concentración, claridad mental y rendimiento durante jornadas de trabajo, estudio o entrenamiento." },
+  rise: { eyebrow: "RISE · Café con Amalaki", title: "No es solo café. Es cómo te hace sentir después.", lead: "Café con Amalaki pensado para acompañar energía y enfoque dentro de tu rutina." },
+  "ultra-vibe": { eyebrow: "ULTRA VIBE · Bienestar cotidiano", title: "No necesitas apagar tu vida. Necesitas recuperar tu equilibrio.", lead: "CBD + CBG + CBC. Una fórmula diseñada para acompañar calma, recuperación, estado de ánimo y bienestar cotidiano." },
+};
+
+export function generateStaticParams() { return products.filter((product) => product.status === "published").map(({ slug }) => ({ slug })); }
+
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const product = getProduct(params.slug);
+  if (!product || product.status !== "published") return {};
+  return { title: `${product.name} by Zilis`, description: product.shortDescription, alternates: { canonical: `/productos/${product.slug}` }, openGraph: { title: `${product.name} by Zilis`, description: product.shortDescription, images: product.productImage ? [product.productImage] : [] }, twitter: { card: "summary_large_image", title: `${product.name} by Zilis`, description: product.shortDescription, images: product.productImage ? [product.productImage] : [] } };
+}
 
 export default function ProductPage({ params }: { params: { slug: string } }) {
-  const product = getProduct(params.slug); if (!product) notFound();
-  const related = product.relatedProducts.map(getProduct).filter(Boolean);
-  return <main id="contenido"><div className="container"><Link href="/" className="back-link" style={{marginTop:28}}>Volver al catálogo</Link><section className="product-hero"><div><p className="eyebrow">{product.category} · {product.brand}</p><h1>{product.name}</h1><p className="lead">{product.heroTitle}</p><p className="muted">{product.heroDescription}</p>{product.status === "pending" && <div className="status-note"><strong>Contenido pendiente:</strong> esta página queda preparada, pero no activa una ficha técnica hasta contar con información oficial suficiente.</div>}</div><div className="product-visual">{product.productImage && <Image src={product.productImage} alt={product.alt} width={720} height={720} sizes="(max-width: 800px) 90vw, 42vw" priority />}</div></section><div className="detail-grid"><div><section className="detail-section"><p className="eyebrow">Contexto</p><h2>¿Para qué puede tener sentido?</h2><ul className="needs-list">{product.needs.map((need) => <li key={need}>{need}</li>)}</ul></section><section className="detail-section"><p className="eyebrow">Lo esencial</p><h2>Beneficios</h2><ul className="benefit-list">{product.benefits.map((benefit) => <li key={benefit}>{benefit}</li>)}</ul></section>{product.howItWorks && <section className="detail-section"><p className="eyebrow">En palabras sencillas</p><h2>Cómo funciona</h2><p>{product.howItWorks}</p></section>}{product.ingredients?.length && <section className="detail-section"><p className="eyebrow">Composición</p><h2>Ingredientes</h2>{product.ingredients.map((ingredient) => <div className="ingredient" key={ingredient.name}><strong>{ingredient.name}</strong><span>{ingredient.description}</span>{ingredient.review && <span className="review-mark">Requiere revisión</span>}</div>)}</section>}{product.usage?.length && <section className="detail-section"><p className="eyebrow">Rutina</p><h2>Cómo usarlo</h2><ul className="benefit-list">{product.usage.map((item) => <li key={item}>{item}</li>)}</ul></section>}{product.faq?.length && <section className="detail-section"><p className="eyebrow">Respuestas</p><h2>Preguntas frecuentes</h2>{product.faq.map((item) => <div className="faq-item" key={item.question}><h3>{item.question}</h3><p>{item.answer}</p></div>)}</section>}{product.warnings?.length && <section className="detail-section"><p className="eyebrow">Importante</p><h2>Precauciones</h2><ul className="benefit-list">{product.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></section>}</div><aside className="side-card"><h3>Productos relacionados</h3><div className="related-grid">{related.map((item) => item && <Link className="related-link" key={item.slug} href={`/productos/${item.slug}`}>{item.name}</Link>)}</div><p style={{fontSize:13,marginTop:22,color:"#426359"}}>{product.disclaimer}</p></aside></div></div><section className="closing"><div className="container"><p className="eyebrow" style={{color:"#d8e9bb"}}>Siguiente paso</p><h2>¿Te interesa este producto?</h2><p>Consulta disponibilidad, precio y opciones de compra con la persona que te compartió este catálogo.</p><Link className="back-link" href="/">Volver al catálogo</Link></div></section></main>;
+  const product = getProduct(params.slug);
+  if (!product || product.status !== "published") notFound();
+  const copy = detailCopy[product.slug];
+  const related = product.relatedProducts.map(getProduct).filter((item): item is Product => Boolean(item && item.status === "published"));
+  const theme = { "--product-accent": product.theme.accent, "--product-accent-dark": product.theme.dark, "--product-soft": product.theme.soft, "--product-ink": product.theme.ink, "--product-gold": product.theme.gold || product.theme.accent } as CSSProperties;
+
+  return <main id="contenido" className={`product-page product-${product.slug}`} style={theme}>
+    <div className="product-shell container">
+      <Link className="back-link" href="/#productos"><span aria-hidden="true">←</span> Volver al catálogo</Link>
+      <section className="product-hero" aria-labelledby="product-title"><div className="product-hero-copy"><p className="eyebrow">{copy.eyebrow}</p><h1 id="product-title">{product.name === "EDGE" ? "ULTRA EDGE" : product.name}</h1><h2>{copy.title}</h2><p className="product-lead">{copy.lead}</p><div className="pill-row">{product.benefits.slice(0, 3).map((benefit) => <span className="pill" key={benefit}>{benefit}</span>)}</div></div><div className="hero-product"><Image src={product.heroImage || product.productImage!} alt={product.alt} width={920} height={656} sizes="(max-width: 760px) 90vw, 47vw" priority /></div></section>
+      <ProductSections product={product} related={related} />
+    </div>
+  </main>;
 }

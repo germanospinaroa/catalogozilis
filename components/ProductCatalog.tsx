@@ -1,6 +1,7 @@
 "use client";
-import Link from "next/link";
+
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { categories, products } from "../data/products";
 
@@ -9,11 +10,21 @@ export function ProductCatalog() {
   const [category, setCategory] = useState("Todos");
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase();
-    return products.filter((product) => {
-      const matchesCategory = category === "Todos" || product.category === category;
-      const searchable = [product.name, product.category, product.shortDescription, ...product.needs, ...product.benefits].join(" ").toLowerCase();
-      return matchesCategory && (!term || searchable.includes(term));
+    return products.filter((product) => product.status === "published").filter((product) => {
+      const searchable = [product.name, product.category, product.shortDescription, product.heroTitle, ...product.needs, ...product.benefits].join(" ").toLowerCase();
+      return (category === "Todos" || product.category === category) && (!term || searchable.includes(term));
     });
-  }, [query, category]);
-  return <section id="productos" className="container"><div className="toolbar" id="buscar"><label className="search-wrap"><span className="search-icon" aria-hidden="true">⌕</span><span className="sr-only">Buscar productos</span><input className="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar producto, beneficio o necesidad..." /></label><div id="categorias" className="chips" aria-label="Filtrar por categoría">{categories.map((item) => <button key={item} className={`chip ${category === item ? "active" : ""}`} onClick={() => setCategory(item)} aria-pressed={category === item}>{item}</button>)}</div></div><div className="section-heading"><div><p className="eyebrow">Biblioteca de productos</p><h2>Empieza por lo que hoy tiene sentido.</h2></div><p>{filtered.length} {filtered.length === 1 ? "producto disponible" : "productos disponibles"}</p></div>{filtered.length ? <div className="product-grid">{filtered.map((product) => <article className={`product-card ${product.status === "pending" ? "pending" : ""}`} key={product.slug}><div className="product-media">{product.productImage && <Image src={product.productImage} alt={product.alt} width={500} height={500} sizes="(max-width: 800px) 90vw, 30vw" />}</div><div className="product-body"><div className="product-topline"><span className="eyebrow">{product.category}</span>{product.status === "pending" && <span className="pending-badge">Pendiente</span>}</div><h3>{product.name}</h3><p>{product.shortDescription}</p><div className="tag-row">{product.needs.slice(0,3).map((tag) => <span className="tag" key={tag}>{tag}</span>)}</div><Link className="product-link" href={`/productos/${product.slug}`}>Conocer producto</Link></div></article>)}</div> : <div className="empty">No encontramos productos con esa búsqueda. Prueba con energía, enfoque, digestión o bienestar.</div>}</section>;
+  }, [category, query]);
+
+  return <section id="productos" className="catalog-section container" aria-labelledby="catalog-title">
+    <div className="catalog-tools" id="buscar">
+      <div className="tools-heading"><p className="eyebrow">Explora la colección</p><h2 id="catalog-title">Encuentra por dónde empezar.</h2></div>
+      <label className="search-label"><span className="sr-only">Buscar productos</span><span className="search-icon" aria-hidden="true">⌕</span><input className="catalog-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar producto, beneficio o necesidad..." /></label>
+      <div id="categorias" className="filter-row" aria-label="Filtrar productos">{categories.map((item) => <button type="button" key={item} className={`filter-button ${category === item ? "active" : ""}`} onClick={() => setCategory(item)} aria-pressed={category === item}>{item}</button>)}</div>
+    </div>
+    {filtered.length ? <div className="product-grid">{filtered.map((product) => <article className={`product-card product-card-${product.slug}`} key={product.slug} style={{ "--product-accent": product.theme.accent, "--product-accent-dark": product.theme.dark, "--product-soft": product.theme.soft, "--product-ink": product.theme.ink } as React.CSSProperties}>
+      <div className="product-media"><span className="product-category">{product.category}</span><Image className="catalog-product" src={product.catalogImage || product.productImage!} alt={product.alt} width={500} height={500} sizes="(max-width: 640px) 82vw, (max-width: 1040px) 42vw, 27vw" /></div>
+      <div className="product-copy"><div className="product-name-row"><h3>{product.name}</h3><span className="product-mark" aria-hidden="true">↗</span></div><p className="product-hook">{product.heroTitle}</p><p>{product.shortDescription}</p><p className="product-note">{product.needs.slice(0, 3).join(" · ")}</p><Link className="product-link" href={`/productos/${product.slug}`}>Conocer producto <span aria-hidden="true">→</span></Link></div>
+    </article>)}</div> : <div className="empty" role="status">No encontramos productos con esa búsqueda. Prueba con energía, enfoque, digestión o bienestar.</div>}
+  </section>;
 }
